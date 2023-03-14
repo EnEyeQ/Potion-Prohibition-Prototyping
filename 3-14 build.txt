@@ -1,0 +1,377 @@
+using RiskBrewingIngredients;
+using RiskBrewingInventory;
+using RiskBrewingPotions;
+using System.Numerics;
+class PotionBrew
+{
+    static void Main()
+    {   Ingredient truffle = new("Truffle", ItemType.Mushroom, new Vector3(165f,42f, 42f), 3, 1);           //see ingredient class for value correlation
+        Ingredient sunflower = new("Sunflower", ItemType.Flower, new Vector3(255f, 215f, 0f), 1, 1);         //setup for ingredients, wont exist here forever
+        Ingredient blackWidow = new("Black Widow Spider", ItemType.Spider, new Vector3(0f, 0f, 0f), 5, 1);
+        Ingredient testI = new("Test", ItemType.Mushroom, new Vector3(165f, 42f, 42f), 3, 1);
+        List<Ingredient> test= new List<Ingredient>();
+       
+        
+
+        IngInventory ingInventory = new();
+        PotInventory potInventory= new();
+
+        ingInventory.AddIngredient(truffle);
+        ingInventory.AddIngredient(sunflower);
+        ingInventory.AddIngredient(blackWidow);
+        
+
+        int riskLevel = 0; // Our starting risk level
+        bool keepPlaying = true; // A bool on if the game should be running or not
+        Random random = new();   //random for our roll
+
+        Console.WriteLine($"Welcome to the brewing game!");
+        Console.WriteLine("You will be given a choice of three ingredients, and a risk level.\nEach time you pick an ingredient, the risk level increases.");
+        Console.WriteLine("If you get a bad roll, you must stop brewing.");
+        Console.WriteLine("Type 'qqq' to exit the program, or fail brewing for it to end\n");
+        Console.WriteLine();
+        Console.WriteLine("Press 1 to Brew \nPress 2 to see your inventory");
+        while (keepPlaying) // set to true, false return will stop program
+        {
+            string firstChoice =  Console.ReadLine();
+
+
+
+
+            //-------------------------------------------------------------- START OF BREWING CODE----------------------------------------------------------------
+            while (firstChoice == "1")
+            {
+
+
+                Console.WriteLine($"Current risk level: {riskLevel}");
+                Console.WriteLine("Choose an ingredient:");
+                Console.WriteLine($"1. {truffle}");
+                Console.WriteLine($"2. {sunflower}");
+                Console.WriteLine($"3. {blackWidow}");
+                Console.WriteLine("");
+
+
+
+                
+                string choice = Console.ReadLine();
+                if (choice == "qqq") // BGS shoutout, not sure if this worked in Morrowind
+                {
+                    firstChoice = "qqq";
+                    break;
+                }
+
+
+
+                if (!int.TryParse(choice, out int ingredientChoice) || ingredientChoice < 1 || ingredientChoice > 3) //Check to make sure the
+                {                                                                                            //answer is valid
+                    Console.WriteLine("Invalid choice. Try again.");
+                    continue;
+                }
+
+                int roll = random.Next(1, 11); // Roll a random number between 1 and 10
+
+                // choose the risk level of the chosen ingredient
+                int ingredientRisk = 0;
+                switch (ingredientChoice)
+                {
+                    case 1:
+                        ingredientRisk = truffle.riskLevel;
+                        test.Add(truffle);
+                        break;
+                    case 2:
+                        ingredientRisk = sunflower.riskLevel;     //the 3 choices of ingredients and their base risk level
+                        test.Add(sunflower);
+                        break;
+                    case 3:
+                        ingredientRisk = blackWidow.riskLevel;
+                        test.Add(blackWidow);
+                        break;
+                }
+
+                // check if the roll is bad
+                if (roll <= ingredientRisk + riskLevel)//not sure how we want to calculate risk so i have it add for now
+                {
+                    
+                    Console.WriteLine($"\nYou rolled a {roll}, which is lower than the risk level of {ingredientRisk + riskLevel}. You must restart brewing.\n");
+                    riskLevel = 0;
+                    Console.WriteLine("Press 1 to Brew \nPress 2 to see your inventory");
+                    firstChoice = "";
+                }
+                else
+                {
+                    
+                    Console.WriteLine($"You rolled a {roll}. Keep playing or collect new potion!");
+                    Console.WriteLine("\n Press 1 to continue brewing.\nPress 2 to collect a new potion!");
+                    riskLevel += ingredientRisk;  //increases base level risk and runs again or bottom text is printed and brewing ends
+
+                    string keepBrewing = Console.ReadLine();
+                    if (keepBrewing == "1")
+                    {
+                        continue;
+                    }
+                    
+                    if (keepBrewing == "2")
+                    {
+
+                        var newPotion = new Potion(test);
+                        potInventory.AddPotion(newPotion);
+                        Console.WriteLine($"NOT CODED YET");
+                        firstChoice = "2";
+                        continue;
+                    }
+
+
+                }
+            }
+            //------------------------------------------------------------- END OF BREWING CODE---------------------------------------------------------------------
+
+
+
+
+            //-------------------------------------------------------- START OF INVENTORY CHECK CODE----------------------------------------------------------------
+            if (firstChoice == "2")
+            {  // Get all the ingredients in the inventory
+                List<Ingredient> allIngredients = ingInventory.GetAllIngredients();
+                List<Potion> allPotions = potInventory.GetAllPotions();
+
+                Console.WriteLine("Your Ingredients:");
+                // Print out the details of each ingredient
+                foreach (Ingredient ingredient in allIngredients)
+                {                    
+                    Console.WriteLine($"{ingredient.name}, Quantity: {ingredient.quantity}");
+
+                }
+
+                    
+
+                Console.WriteLine("\nYour Potions:");
+                // Print out the details of each ingredient
+                foreach (Potion potion in allPotions)
+                {
+                    Console.WriteLine($"{potion.potionName}");
+
+                }
+
+                Console.WriteLine("\nEnter 1 to start brewing");
+
+            }
+            //----------------------------------------------------------- END OF INVENTORY CHECK CODE----------------------------------------------------------------
+
+
+            if (firstChoice == "qqq") // Shoutout to Bethesda Game Engine
+                {                     // quits the program
+                break; 
+            }
+        }
+    }
+}
+
+using System.Numerics;
+using RiskBrewingPotions;
+
+namespace RiskBrewingIngredients
+{
+
+    //---------------------------------------------------------------START OF INGREDIENT PROPERTIES----------------------------------------------------------------
+    public class Ingredient
+    {        
+        public string name { get; set; }
+        
+        public ItemType itemType { get; set; }
+
+        public Vector3 color { get; set; }
+        public int riskLevel { get; set; }  
+        public int quantity { get; set; }    
+
+        public Ingredient(string itemName, ItemType itemTypeProp, Vector3 colorProp, int itemRiskLevel, int itemQuantity)
+        {
+            name = itemName;
+            itemType = itemTypeProp;
+            color = colorProp;
+            riskLevel = itemRiskLevel;
+            quantity = itemQuantity;   
+        }
+
+        public override string ToString()
+        {
+            return $"{name} - Amount: {quantity} ({itemType}) - RGB({color}) - Risk Level {riskLevel}"; //allows us print out items with
+        }                                                                                                            //all current values into strings           
+    }
+    public enum ItemType
+    {
+        Flower = 1, //freeing up the value of 0
+        Mushroom,   //list of items types
+        Spider
+    }
+
+
+    //-------------------------------------------------------------- END OF INGREDIENT PROPERTIES-------------------------------------------------------------------
+    
+}
+  using RiskBrewingIngredients;
+    using RiskBrewingInventory;
+    using System.Numerics;
+
+
+    namespace RiskBrewingPotions
+    {
+        public class Potion
+        {
+
+            private static List<Potion> potions = new List<Potion>(); // static list variable to store the generated potions
+            private List<Ingredient> ingredientsUsed; // List of ingredients used to generate the potion
+            public string? potionName { get; set; } // Name of the potion
+            private int potency { get; set; } // Potency of the potion
+            private Vector3 color { get; }
+
+            public Potion(List<Ingredient> potion)
+            {
+                ingredientsUsed = potion;            
+                GeneratePotion();
+                potions.Add(this);
+            }
+
+            
+            public void GeneratePotion()
+            {
+                // Calculate the total potency based on the ingredients risk level
+                int totalPotency = 1;
+
+                foreach (Ingredient ingredient in ingredientsUsed)
+                {
+                    totalPotency += ingredient.riskLevel;
+                }
+
+                // Calculate the average potency of the ingredients
+                int averagePotency = totalPotency / 1;
+
+                // Generate a random name for the potion
+                string[] possibleNames = { "Healing Potion", "Poisonous Elixir", "Potion of Invisibility" }; // List of possible names
+                Random random = new Random();
+                potionName = possibleNames[random.Next(possibleNames.Length)];
+
+                // Calculate the potion potency based on the average ingredient potency and a random factor
+                potency = (int)(averagePotency * (random.NextDouble() + 0.5));
+
+
+            
+            }
+            public static List<Potion> GetPotions()
+            {
+                return potions; // return the list of generated potions
+            }
+        }
+    }
+using RiskBrewingPotions;
+using RiskBrewingIngredients;   
+
+
+
+namespace RiskBrewingInventory
+{
+    //----------------------------------------------------------- START OF INGREDIENT INVENTORY DICTIONARY CODE----------------------------------------------------------------
+    // This code defines a class called Inventory that represents a collection of ingredients.
+    public class IngInventory
+    {
+        // The class contains a private field called _inventory, which is a dictionary that maps ingredient names to lists of Ingredient objects.
+        private Dictionary<string, List<Ingredient>> _inventory;
+
+
+
+        // The class has a constructor that initializes the _inventory field with a new, empty dictionary.
+        public IngInventory()
+        {
+            _inventory = new Dictionary<string, List<Ingredient>>();
+        }
+
+        // The class has a method called AddIngredient that takes an Ingredient object as a parameter and adds it to the dictionary. 
+        public void AddIngredient(Ingredient ingredient)
+        {
+            // If the dictionary doesn't already contain a list for the given ingredient name, it creates a new list and adds it to the dictionary first.
+            if (!_inventory.ContainsKey(ingredient.name))
+            {
+                _inventory[ingredient.name] = new List<Ingredient>();
+            }
+
+            // It then adds the ingredient object to the list corresponding to the given name.
+            _inventory[ingredient.name].Add(ingredient);
+        }
+
+
+
+        //  a method called GetAllIngredients that returns a list of all the Ingredient objects in the inventory, regardless of their names. 
+        public List<Ingredient> GetAllIngredients()
+        {
+            // initializes a new empty list to hold all the ingredients.
+            List<Ingredient> fullinventory = new();
+
+            // It then iterates over all the lists in the dictionary and adds their contents to the new list.
+            foreach (List<Ingredient> inventoryList in _inventory.Values)
+            {
+                fullinventory.AddRange(inventoryList);
+            }
+
+            // returns the list of all the ingredients.
+            return fullinventory;
+        }
+
+        // The class has a method called GetIngredientsByName that takes a string parameter
+        // representing an ingredient name and returns a list of Ingredient objects that have that name.
+        /*public List<Ingredient> GetIngredientsByName(string name)
+            {
+                // If the inventory contains a list of ingredients with the given name, it returns that list.
+                if (_inventory.ContainsKey(name))
+                {
+                    return _inventory[name];
+                }
+
+                // Otherwise, it returns an empty list.
+                return new List<Ingredient>();
+            }
+        */
+
+
+
+    }
+}
+
+
+
+public class PotInventory
+{
+    
+    private Dictionary<string, List<Potion>> _inventory;
+
+
+    public PotInventory()
+    {
+        _inventory = new Dictionary<string, List<Potion>>();
+    } 
+    public void AddPotion(Potion potion)
+    {
+ 
+        if (!_inventory.ContainsKey(potion.potionName))
+        {
+            _inventory[potion.potionName] = new();
+        }
+
+      
+        _inventory[potion.potionName].Add(potion);
+    }
+
+    public List<Potion> GetAllPotions()
+    {
+      
+        List<Potion> fullpotinventory = new();
+
+       
+        foreach (List<Potion> inventoryList in _inventory.Values)
+        {
+            fullpotinventory.AddRange(inventoryList);
+        }
+
+       
+        return fullpotinventory;
+    }
+
+}
